@@ -1,0 +1,20 @@
+services:
+  db-test:
+    container_name: pg_db
+    image:  postgres:13.3
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    ports:
+      - 5432:5432
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d
+  pgadmin-test:
+    container_name: pg_admin
+    image: dpage/pgadmin4:7
+    environment:
+      PGADMIN_DEFAULT_EMAIL: root@email.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - 8080:80
