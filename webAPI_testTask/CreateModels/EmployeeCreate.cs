@@ -1,11 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using webAPI_testTask.Models;
 
-namespace webAPI_testTask.Models
+namespace webAPI_testTask.CreateModels
 {
-    public class Employee
+    public class EmployeeCreate
     {
-        [Required]
-        public int Id { get; set; }
 
         [Required]
         public string Name { get; set; }

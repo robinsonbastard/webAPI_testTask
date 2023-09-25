@@ -1,11 +1,12 @@
+using Dapper;
 using Microsoft.AspNetCore.Mvc;
+using webAPI_testTask.CreateModels;
 using webAPI_testTask.Models;
-using webAPI_testTask.Models.Employees;
 using webAPI_testTask.Repositories.Interfaces;
+using webAPI_testTask.UpdateModels;
 
 namespace webAPI_testTask.Controllers
 {
-    //TODO убрать валидацию куда-нибудь, чтобы не дублировать
     [ApiController]
     [Route("[controller]")]
     public class EmployeesController : ControllerBase
@@ -13,30 +14,27 @@ namespace webAPI_testTask.Controllers
         private readonly IEmployeeRopository _employeeRepositoty;
         private readonly IDepartmentRepository _departmentRepositoty;
 
-        public EmployeesController(IEmployeeRopository employeeRepositoty, IDepartmentRepository departmentRepositoty)
+        public EmployeesController(
+            IEmployeeRopository employeeRepositoty, 
+            IDepartmentRepository departmentRepositoty)
         {
             _employeeRepositoty = employeeRepositoty;
             _departmentRepositoty = departmentRepositoty;
         }
 
         [HttpPost]
-        public ActionResult<int> AddNewEmployee(EmployeeCreate body)
+        public ActionResult<int> CreateEmployee(EmployeeCreate body)
         {
             try
             {
-                var department = _departmentRepositoty.GetDepartmentById(body.DepartmentId);
-                if (department == null)
-                {
-                    ModelState.AddModelError("Department",
-                        $"There is no department with ID = {body.DepartmentId}");
-                    return BadRequest(ModelState);
-                }
-                var id = _employeeRepositoty.AddNewEmployee(body);
+                if (!_departmentRepositoty.CheckDepartmentExistence(body.Department))
+                    return BadRequest($"Department does not exist");
+                var id = _employeeRepositoty.CreateNewEmployee(body);
                 return Ok($"Employee create with ID = {id}");
             }
-            catch (Exception)
+            catch (Exception error)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Employee with this passport details or phone already exist");
+                return StatusCode(StatusCodes.Status500InternalServerError, error.Message);
             }
         }   
 
@@ -51,9 +49,9 @@ namespace webAPI_testTask.Controllers
                 _employeeRepositoty.DeleteEmployeeById(id);
                 return Ok($"Employee with ID = {id} successfully deleted");
             }
-            catch (Exception)
+            catch (Exception error)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "SomeMagic");
+                return StatusCode(StatusCodes.Status500InternalServerError, error.Message);
             }
 
         }
@@ -69,26 +67,28 @@ namespace webAPI_testTask.Controllers
                 else 
                     return NotFound($"Employees with companyID = {id} not found");
             }
-            catch (Exception)
+            catch (Exception error)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "SomeMagic");
+                return StatusCode(StatusCodes.Status500InternalServerError, error.Message);
             }
         }
 
         [HttpGet("department/{id}")]
-        public ActionResult<IEnumerable<Employee>> GetEmployeeByDepartmentId(int id)
+        public ActionResult<IEnumerable<Employee>> GetEmployeesByDepartmentId(int id)
         {
             try
             {
+                if (_departmentRepositoty.GetDepartmentById(id) == null)
+                    return BadRequest($"Department with ID = {id} does not exist");
                 var result = _employeeRepositoty.GetEmployeesByDepartmentId(id);
                 if (result.Any())
                     return Ok(result);
                 else
-                    return NotFound($"Employees with departmentID = {id} not found");
+                    return NotFound($"Employees with this department not found");
             }
-            catch (Exception)
+            catch (Exception error)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "SomeMagic");
+                return StatusCode(StatusCodes.Status500InternalServerError, error.Message);
             }
         }
 
@@ -99,24 +99,35 @@ namespace webAPI_testTask.Controllers
             {
                 var employee = _employeeRepositoty.GetEmployeeById(id);
                 if (employee == null)
-                    return NotFound($"An employee with ID = {id} will not found");
-                var update = body.GetType().GetProperties()
-                    .Where(x => x.GetValue(body) != null)
-                    .Select(x => $"{x.Name.ToLower()} = '{x.GetValue(body)}',")
-                    .Aggregate("", (y, x) => y + x)
+                    return NotFound($"An employee with ID = {id} not found");
+                if (body.DepartmentId != null)
+                    if (_departmentRepositoty.GetDepartmentById((int)body.DepartmentId) == null)
+                        return BadRequest($"Department with ID = {body.DepartmentId} is not exist");
+                var parameters = new DynamicParameters();
+                parameters.Add("Id", id);
+                var updateEmployee = body.GetType().GetProperties()
+                    .Where(x => x.GetValue(body) != null && x.Name != "Passport")
+                    .Select(x => { parameters.Add(x.Name, x.GetValue(body)); return $"{x.Name.ToLower()} = @{x.Name},"; })
+                    .Aggregate("", (y, x) => $"{y} {x}")
                     .TrimEnd(',', ' ');
-                if (update == "") return NotFound("Empty request body");
-                _employeeRepositoty.EditEmployeeById(update, id);
-                return Ok(employee);
+                var updatePassport = body.Passport?.GetType().GetProperties()
+                    .Where(x => x.GetValue(body.Passport) != null)
+                    .Select(x => { parameters.Add(x.Name, x.GetValue(body.Passport)); return $"{x.Name.ToLower()} = @{x.Name},"; })
+                    .Aggregate("", (y, x) => $"{y} {x}")
+                    .TrimEnd(',', ' ');
+                if (string.IsNullOrEmpty(updateEmployee) && string.IsNullOrEmpty(updatePassport))
+                    return BadRequest("Empty request body");
+                _employeeRepositoty.EditEmployeeById(parameters, updateEmployee, updatePassport);
+                return NoContent();
             }
-            catch (Exception)
+            catch (Exception error)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "SomeMagic");
+                return StatusCode(StatusCodes.Status500InternalServerError, error.Message);
             }
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Employee>> GetAllEmployee()
+        public ActionResult<IEnumerable<Employee>> GetAllEmployees()
         {
             try
             {
@@ -126,9 +137,9 @@ namespace webAPI_testTask.Controllers
                 else
                     return NotFound($"Employees not found");
             }
-            catch (Exception)
+            catch (Exception error)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "SomeMagic");
+                return StatusCode(StatusCodes.Status500InternalServerError, error.Message);
             }
         }
     }

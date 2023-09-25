@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using webAPI_testTask.Models;
+using webAPI_testTask.RequestModels;
 
-namespace webAPI_testTask.Models
+namespace webAPI_testTask
 {
-    public class Employee
+    public class EmployeeRequestCreate
     {
-        [Required]
-        public int Id { get; set; }
-
         [Required]
         public string Name { get; set; }
 
@@ -20,9 +19,9 @@ namespace webAPI_testTask.Models
         public int CompanyId { get; set; }
 
         [Required]
-        public Passport Passport { get; set; }
+        public Department Department { get; set; }
 
         [Required]
-        public Department Department { get; set; }
+        public PassportRequest Passport { get; set; }
     }
 }

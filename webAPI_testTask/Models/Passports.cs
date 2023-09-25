@@ -1,8 +1,13 @@
-﻿namespace webAPI_testTask.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace webAPI_testTask.Models
 {
     public class Passport
     {
-        public string? Number { get; set; }
-        public string? Type { get; set; }
+        [Required]
+        public string Number { get; set; }
+
+        [Required]
+        public string Type { get; set; }
     }
 }

@@ -22,6 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="DepartmentRequest.cs" />
+    <Compile Remove="EmployeeRequestCreate.cs" />
+    <Compile Remove="PassportRequest.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.151" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="7.0.10" />

@@ -1,12 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace webAPI_testTask.Models
+namespace webAPI_testTask.CreateModels
 {
-    public class Department
+    public class DepartmentCreate
     {
-        [Required]
-        public int Id { get; set; }
-
         [Required]
         public string Name { get; set; }
 

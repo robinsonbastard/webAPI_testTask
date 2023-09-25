@@ -2,36 +2,42 @@ CREATE DATABASE employeesdatabase;
 \connect employeesdatabase
 
 CREATE TABLE departments (
-    Id SERIAL PRIMARY KEY,
-    Phone TEXT NOT NULL,
-    Name TEXT NOT NULL,
-    UNIQUE (Phone, Name)
+    id SERIAL PRIMARY KEY,
+    phone TEXT UNIQUE NOT NULL,
+    name TEXT UNIQUE NOT NULL,
 );
 
-CREATE TABLE employees
-(
-    Id SERIAL PRIMARY KEY,
-    Name TEXT NOT NULL,
-    Surname TEXT NOT NULL,
-    Phone TEXT NOT NULL,
-    CompanyId INTEGER NOT NULL,
-	PassportType TEXT NOT NULL,
-	PassportNumber TEXT NOT NULL,
-	DepartmentId INTEGER NOT NULL,
-	UNIQUE(Phone, PassportNumber, PassportType)
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    surname TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    company_id INTEGER NOT NULL,
+	department_id INTEGER NOT NULL,
+	UNIQUE(phone)
 );
+
+CREATE TABLE passports (
+    type TEXT NOT NULL,
+	number TEXT NOT NULL,
+	employee_id INTEGER NOT NULL,
+	PRIMARY KEY (type, number),
+    UNIQUE(employee_id)
+);
+
+ALTER TABLE passports
+ADD FOREIGN KEY (employee_id) 
+REFERENCES employees (id) ON DELETE CASCADE;
 
 ALTER TABLE employees
-ADD FOREIGN KEY (DepartmentId) REFERENCES departments (Id);
+ADD FOREIGN KEY (department_id) 
+REFERENCES departments (id) ON DELETE CASCADE;
 
 INSERT INTO departments (Phone, Name) 
 VALUES  ('1', 'Отдел 1'),
-        ('2', 'Отдел 2'),
-        ('3', 'Отдел 3'),
-        ('4', 'Отдел 4'),
-        ('5', 'Отдел 5');
+        ('2', 'Отдел 2');
 
-INSERT INTO employees (name, surname, phone, companyid, departmentid, passporttype, passportnumber)
-VALUES  ('Раиль', 'Тинчурин', '111-111', '1', '1', '1', '1111'),
-        ('Робинзон', 'Бастард', '222-222', '2', '2', '2', '2222');
+INSERT INTO employees (name, surname, phone, company_id, department_id)
+VALUES  ('Раиль', 'Тинчурин', '111-111', 1, 1),
+        ('Робинзон', 'Бастард', '222-222', 2, 2);
 
